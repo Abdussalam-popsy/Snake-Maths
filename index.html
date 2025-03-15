@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Math Snake</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="start-screen">
+        <h1>SNAKE MATHS</h1>
+        <p>Solve math problems to move the snake! Answer in 10 seconds or game over.</p>
+        <button id="start-button">Start Game</button>
+    </div>
+
+    <div id="game-screen" style="display: none;">
+        <h1 id="game-title">SNAKE MATHS</h1>
+        
+            <div id="game-controls">
+                <div class="control-section">
+                    <span id="score-display">SCORE: 0</span>
+                </div>
+                <div class="control-section">
+                    <span id="lives-display">LIVE: 5</span>
+                </div>
+                <div class="control-section">
+                    <span id="level-display">LEVEL: Easy</span>
+                </div>
+            </div>
+
+            <div id="control-buttons">
+                <button id="pause-button" title="Pause">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 4H10V20H6V4Z" fill="black"/>
+                        <path d="M14 4H18V20H14V4Z" fill="black"/>
+                    </svg>
+                </button>
+                <button id="audio-toggle" title="Toggle Audio">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3.75V20.25C12 20.6642 11.6642 21 11.25 21C11.1065 21 10.9686 20.9464 10.8566 20.8535L5.57161 16.5H2.75C2.33579 16.5 2 16.1642 2 15.75V8.25C2 7.83579 2.33579 7.5 2.75 7.5H5.57161L10.8566 3.14645C10.9686 3.05355 11.1065 3 11.25 3C11.6642 3 12 3.33579 12 3.75ZM6.75 9H3.5V15H6.75C6.94891 15 7.13968 15.079 7.28033 15.2197L10.5 18.4393V5.56066L7.28033 8.78033C7.13968 8.921 6.94891 9 6.75 9Z" fill="black"/>
+                    </svg>
+                </button>
+                <button id="restart-button" title="Restart">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V1L8 5L12 9V5C15.31 5 18 7.69 18 11C18 14.31 15.31 17 12 17C8.69 17 6 14.31 6 11H4C4 15.42 7.58 19 12 19C16.42 19 20 15.42 20 11C20 6.58 16.42 3 12 3Z" fill="black"/>
+                    </svg>
+                </button>
+            </div>
+        
+        
+        
+        <canvas id="game-canvas" width="520" height="341"></canvas>
+        <div id="question-area">
+            <p id="question">Question goes here</p>
+            <div id="multiple-choice">
+                <button class="choice">Choice 1</button>
+                <button class="choice">Choice 2</button>
+                <button class="choice">Choice 3</button>
+            </div>
+            <div id="timer-bar"></div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" style="display: none;">
+        <h1>Game Over</h1>
+        <p>Your Score: <span id="final-score">0</span></p>
+        <p>Highscore: <span id="highscore">0</span></p>
+        <button id="play-again-button">Play Again</button>
+        <button id="share-button">Share Score</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

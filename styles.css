@@ -1,0 +1,244 @@
+body {
+    font-family: 'Bangers', Arial, sans-serif;
+    letter-spacing: 3px; /* Apply to all text by default */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: #E8EEEF;
+    position: relative;
+}
+
+#start-screen, #game-over-screen {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.5s ease-in;
+    width: 400px;
+    max-width: 100%;
+}
+
+.flex-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+#start-screen p {
+    font-family: Arial, sans-serif; /* Arial, so no letter-spacing change */
+    letter-spacing: normal; /* Reset to default */
+}
+
+#start-screen h1, #game-over-screen h1 {
+    font-family: 'Bangers', Arial, sans-serif; /* Explicitly set to ensure clarity */
+    letter-spacing: 5px; /* Apply letter-spacing */
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: #000;
+}
+
+#game-screen {
+    text-align: center;
+    position: relative;
+}
+
+#game-title {
+    font-family: 'Bangers', Arial, sans-serif; /* Explicitly set */
+    letter-spacing: 5px; /* Apply letter-spacing */
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #000;
+}
+
+#game-controls {
+    display: flex;
+    justify-content: space-between;
+    background: #E8CB4A;
+    border: 2px solid #000;
+    border-radius: 8px;
+    padding: 5px;
+    width: fit-content;
+    margin: auto;
+}
+
+
+.control-section {
+    padding: 5px 10px;
+    border-right: 2px solid #000;
+    display: flex;
+    align-items: center;
+}
+
+.control-section:last-child {
+    border-right: none;
+}
+
+.control-section span {
+    font-family: 'Bangers', Arial, sans-serif; /* Explicitly set */
+    letter-spacing: 5px; /* Apply letter-spacing */
+    font-size: 20px;
+    color: #F4E074;
+    text-shadow: 2px 2px 0 #000;
+    -webkit-text-stroke: 1px #000;
+    text-stroke: 1px #000;
+}
+
+#control-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0px;
+}
+
+#game-canvas {
+    background: #F4E074;
+    border: 2px solid #000;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    width: 520px;
+    height: 341px;
+}
+
+#question-area {
+    margin-top: 10px;
+    text-align: center;
+}
+
+#question {
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #000;
+    letter-spacing: normal; /* Reset to default for Arial */
+}
+
+#multiple-choice {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    visibility: visible;
+}
+
+.choice {
+    padding: 10px 20px;
+    background: #E8CB4A;
+    color: #000;
+    border: 2px solid #000;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 1);
+    transition: transform 0.1s;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-block;
+    letter-spacing: normal; /* Reset to default for Arial */
+}
+
+.choice:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.choice:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+#timer-bar {
+    width: 200px;
+    height: 20px;
+    background: transparent;
+    border: 2px solid #000;
+    border-radius: 8px;
+    position: relative;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+#timer-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: #E8CB4A;
+    transform: translateX(-50%) scaleX(1);
+    transform-origin: center;
+    transition: transform 0.1s linear;
+}
+
+#timer-bar[style*="--width"]::before {
+    transform: translateX(-50%) scaleX(calc(var(--width) / 100));
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background: #E8CB4A;
+    color: #000;
+    border: 2px solid #000;
+    border-radius: 6px;
+    transition: transform 0.1s;
+    font-family: 'Bangers', Arial, sans-serif;
+    letter-spacing: 3px; /* Apply letter-spacing */
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+#pause-button, #audio-toggle, #restart-button {
+    background: #eeeeee;
+    border-radius: 50%;
+    padding: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #000;
+}
+
+#pause-button {
+    background: #757575;
+    color: #fff;
+}
+
+#audio-toggle:hover, #pause-button:hover, #restart-button:hover {
+    background: #666;
+}
+
+@media (max-width: 768px) {
+    #start-screen, #game-over-screen {
+        width: 100%;
+        padding: 15px;
+    }
+    #game-canvas {
+        width: 100%;
+        height: auto;
+    }
+    #timer-bar {
+        width: 100%;
+    }
+    #control-buttons {
+        justify-content: center;
+        gap: 10px;
+    }
+    #game-controls {
+        width: 100%;
+        justify-content: space-around;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
