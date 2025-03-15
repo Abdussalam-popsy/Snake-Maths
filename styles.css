@@ -65,7 +65,6 @@ body {
     margin: auto;
 }
 
-
 .control-section {
     padding: 5px 10px;
     border-right: 2px solid #000;
@@ -220,21 +219,101 @@ button:hover {
     #start-screen, #game-over-screen {
         width: 100%;
         padding: 15px;
+        box-sizing: border-box;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%); /* Center the start screen vertically and horizontally */
+        max-height: 80vh;
+        overflow-y: auto;
     }
-    #game-canvas {
+
+    #game-screen {
         width: 100%;
-        height: auto;
+        box-sizing: border-box;
+        padding: 10px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        max-height: 850px;
+        overflow-y: auto; /* Enable scrolling if content exceeds viewport */
     }
-    #timer-bar {
-        width: 100%;
+
+    #game-title {
+        font-size: 36px;
+        margin: 5px 0;
     }
+
+    #start-screen h1, #game-over-screen h1 {
+        font-size: 36px;
+        margin: 5px 0;
+    }
+
+    #game-controls {
+        width: calc(100% - 40px); /* 20px margin on both sides */
+        margin: 5px 20px;
+        justify-content: space-around;
+    }
+
+    .control-section span {
+        font-size: 16px; /* Reduced for better spacing */
+    }
+
     #control-buttons {
+        flex-direction: row; /* Align horizontally on mobile */
         justify-content: center;
         gap: 10px;
+        margin: 5px 0;
     }
-    #game-controls {
-        width: 100%;
-        justify-content: space-around;
+
+    button {
+        padding: 12px 25px;
+        font-size: 20px;
+    }
+
+    #pause-button, #audio-toggle, #restart-button {
+        padding: 10px;
+        width: 50px;
+        height: 50px;
+    }
+
+    #game-canvas {
+        width: calc(100% - 40px); /* 20px margin on both sides */
+        height: 250px; /* Reduced height to fit within 850px */
+        margin: 5px 20px;
+    }
+
+    #question-area {
+        margin-top: 5px;
+        position: relative; /* Ensure proper stacking */
+    }
+
+    #question {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+
+    #multiple-choice {
+        flex-direction: row; /* Align horizontally on mobile */
+        justify-content: center;
+        gap: 15px; /* Increased gap for thumb-friendliness */
+        margin: 5px 0;
+        flex-wrap: wrap; /* Allow wrapping if buttons don't fit */
+    }
+
+    .choice {
+        padding: 12px 25px;
+        font-size: 18px;
+        width: 100px; /* Reduced width for horizontal alignment */
+        text-align: center;
+    }
+
+    #timer-bar {
+        width: calc(100% - 40px); /* 20px margin on both sides */
+        margin: 5px 20px;
+        height: 15px;
+        position: relative; /* Revert to original relative positioning */
     }
 }
 
