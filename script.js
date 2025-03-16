@@ -7,19 +7,22 @@ let highscore = localStorage.getItem('highscore') || 0;
 let lives = 5;
 let gameLoop;
 let timer;
-let timeLeft = 10;
+let timeLeft = 15; // Timer set to 15 seconds
 let currentQuestion, correctAnswer;
 let useMultipleChoice = true;
 let difficultyLevel = 0;
+let selectedDifficulty = 'easy';
 let autoMoving = false;
 let isPaused = false;
 let isMuted = false;
+let isMovementPaused = false;
 let scoreDisplay = document.getElementById('score-display');
 let currentHeadColor = 'green';
+let questionStartTime = 0;
 
 // Define speeds
-const DEFAULT_SPEED = 100; // Default speed for manual movement
-const FAST_SPEED = 30; // Faster speed for auto-moving to eat food
+const DEFAULT_SPEED = 100;
+let FAST_SPEED = 50;
 
 // Audio elements
 const correctSound = new Audio('correct.mp3');
@@ -31,6 +34,10 @@ const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const gridSize = 10;
 const cubeSize = 10;
+
+// Grid dimensions
+const gridWidth = canvas.width / gridSize; // 520 / 10 = 52
+const gridHeight = canvas.height / gridSize; // 341 / 10 = 34.1, rounded down to 34
 
 const startScreen = document.getElementById('start-screen');
 const gameScreen = document.getElementById('game-screen');
@@ -49,6 +56,7 @@ const timerBar = document.getElementById('timer-bar');
 const finalScore = document.getElementById('final-score');
 const highscoreElement = document.getElementById('highscore');
 const shareButton = document.getElementById('share-button');
+const difficultySelect = document.getElementById('difficulty');
 
 startButton.addEventListener('click', startGame);
 playAgainButton.addEventListener('click', startGame);
@@ -91,10 +99,11 @@ function getFoodColor(score) {
 }
 
 function startGame() {
-    highscore = localStorage.getItem('highscore') || 0; // Load highscore without prompting
+    highscore = localStorage.getItem('highscore') || 0;
+    selectedDifficulty = difficultySelect.value;
     startScreen.style.display = 'none';
-    gameOverScreen.style.display = 'none';
     gameScreen.style.display = 'block';
+    difficultySelect.style.display = 'none'; // Hide dropdown on game start
     snake = [{ x: 10, y: 10 }];
     score = 0;
     direction = { x: 1, y: 0 };
@@ -102,6 +111,7 @@ function startGame() {
     autoMoving = false;
     isPaused = false;
     isMuted = false;
+    isMovementPaused = false;
     lives = 5;
     currentHeadColor = 'green';
     livesDisplay.textContent = `LIVE: ${lives}`;
@@ -111,9 +121,21 @@ function startGame() {
     audioToggle.innerHTML = soundOnSVG;
     spawnCube();
     generateQuestion();
-    gameLoop = setInterval(update, DEFAULT_SPEED); // Start with default speed
+    gameLoop = setInterval(update, DEFAULT_SPEED);
     startTimer();
-    updateSnake(); // Initial draw
+    updateSnake();
+}
+
+function togglePause() {
+    if (isPaused) {
+        isPaused = false;
+        pauseButton.innerHTML = pauseSVG;
+        startTimer();
+    } else {
+        isPaused = true;
+        pauseButton.innerHTML = playSVG;
+        clearInterval(timer);
+    }
 }
 
 function toggleAudio() {
@@ -127,75 +149,140 @@ function toggleAudio() {
 function updateLevelDisplay() {
     if (score < 5) {
         difficultyLevel = 0;
-        levelDisplay.textContent = 'LEVEL: Easy';
+        levelDisplay.textContent = `LEVEL: ${selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} 1`;
     } else if (score < 10) {
         difficultyLevel = 1;
-        levelDisplay.textContent = 'LEVEL: Intermediate';
+        levelDisplay.textContent = `LEVEL: ${selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} 2`;
     } else {
         difficultyLevel = 2;
-        levelDisplay.textContent = 'LEVEL: Hard';
+        levelDisplay.textContent = `LEVEL: ${selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} 3`;
     }
 }
 
 function generateQuestion() {
     let num1, num2, operator;
     let maxNum;
+    const operations = {
+        easy: ['+', '-'],
+        hard: ['*', '/']
+    };
+    const difficulty = selectedDifficulty;
+    const operationPool = operations[difficulty];
+
     if (score < 5) {
         difficultyLevel = 0;
-        maxNum = 100;
-        num1 = Math.floor(Math.random() * maxNum);
-        num2 = Math.floor(Math.random() * (100 - num1));
-        operator = '+';
+        maxNum = difficulty === 'easy' ? 100 : 50;
     } else if (score < 10) {
         difficultyLevel = 1;
-        maxNum = 500;
-        num1 = Math.floor(Math.random() * maxNum);
-        operator = ['+', '-'][Math.floor(Math.random() * 2)];
-        if (operator === '+') {
-            num2 = Math.floor(Math.random() * (500 - num1));
-        } else {
-            num2 = Math.floor(Math.random() * num1);
-        }
+        maxNum = difficulty === 'easy' ? 500 : 100;
     } else {
         difficultyLevel = 2;
-        maxNum = 999;
-        num1 = Math.floor(Math.random() * maxNum);
-        operator = ['+', '-'][Math.floor(Math.random() * 2)];
-        if (operator === '+') {
-            num2 = Math.floor(Math.random() * (999 - num1));
-        } else {
-            num2 = Math.floor(Math.random() * num1);
+        maxNum = difficulty === 'easy' ? 999 : 200;
+    }
+
+    num1 = Math.floor(Math.random() * maxNum);
+    operator = operationPool[Math.floor(Math.random() * operationPool.length)];
+
+    if (operator === '/') {
+        // Ensure division results in a whole number
+        const quotient = Math.floor(Math.random() * (maxNum / 2)) + 1;
+        num2 = Math.floor(Math.random() * (maxNum / quotient)) + 1;
+        if (num2 === 0) num2 = 1;
+        num1 = quotient * num2; // Adjust num1 to ensure exact division
+        correctAnswer = quotient;
+    } else if (operator === '*') {
+        num2 = Math.floor(Math.random() * 32) + 1; // Limit multiplier for Hard mode
+        correctAnswer = num1 * num2;
+        if (correctAnswer > 1000) {
+            num2 = Math.floor(Math.random() * (1000 / num1)) + 1;
+            correctAnswer = num1 * num2;
         }
+    } else if (operator === '+') {
+        num2 = Math.floor(Math.random() * (maxNum - num1));
+        correctAnswer = num1 + num2;
+    } else if (operator === '-') {
+        num2 = Math.floor(Math.random() * num1);
+        correctAnswer = num1 - num2;
     }
 
     currentQuestion = `${num1} ${operator} ${num2}`;
-    correctAnswer = eval(currentQuestion);
-
     questionElement.textContent = `${currentQuestion} = ?`;
-    multipleChoice.style.display = 'flex'; // Ensure multiple choice is visible
+    multipleChoice.style.display = 'flex';
 
-    const answers = [correctAnswer];
+    const answers = [correctAnswer]; // Ensure correctAnswer is always included
     while (answers.length < 3) {
-        let wrongAnswer = Math.floor(Math.random() * 1000);
-        if (!answers.includes(wrongAnswer)) answers.push(wrongAnswer);
+        let wrongAnswer;
+        let isUnique = false;
+        let attempts = 0;
+        const maxAttempts = 20; // Increased to allow more tries
+
+        do {
+            wrongAnswer = correctAnswer + Math.floor(Math.random() * 41) - 20; // ±20 range for closer options
+            if (wrongAnswer < 0) wrongAnswer = 0; // Prevent negative answers
+            if (wrongAnswer > 999) wrongAnswer = 999; // Cap at 999
+            isUnique = !answers.includes(wrongAnswer);
+            attempts++;
+        } while (!isUnique && attempts < maxAttempts);
+
+        if (isUnique) {
+            answers.push(wrongAnswer);
+        } else {
+            // Fallback: Try a wider range and ensure uniqueness
+            let offset = 30; // Start with ±30
+            while (answers.length < 3) {
+                wrongAnswer = correctAnswer + (Math.random() > 0.5 ? offset : -offset);
+                if (wrongAnswer < 0) wrongAnswer = 0;
+                if (wrongAnswer > 999) wrongAnswer = 999;
+                if (!answers.includes(wrongAnswer)) {
+                    answers.push(wrongAnswer);
+                    break;
+                }
+                offset += 10; // Increment offset to widen the range
+                if (offset > 100) {
+                    // Last resort: Ensure uniqueness by adding incremental values
+                    wrongAnswer = answers[answers.length - 1] + 1;
+                    if (wrongAnswer > 999) wrongAnswer = answers[answers.length - 1] - 1;
+                    if (!answers.includes(wrongAnswer)) answers.push(wrongAnswer);
+                }
+            }
+        }
     }
-    answers.sort(() => Math.random() - 0.5);
+
+    // Final check for duplicates
+    const uniqueAnswers = [...new Set(answers)];
+    while (uniqueAnswers.length < 3) {
+        let newOption = correctAnswer + Math.floor(Math.random() * 41) - 20;
+        if (newOption < 0) newOption = 0;
+        if (newOption > 999) newOption = 999;
+        if (!uniqueAnswers.includes(newOption)) uniqueAnswers.push(newOption);
+    }
+
+    uniqueAnswers.sort(() => Math.random() - 0.5); // Shuffle answers
+
+    // Assign to choices
     for (let i = 0; i < choices.length; i++) {
-        choices[i].textContent = answers[i];
+        choices[i].textContent = uniqueAnswers[i];
         choices[i].disabled = false;
-        choices[i].style.display = 'inline-block'; // Ensure each button is visible
-        choices[i].onclick = () => checkAnswer(answers[i]);
+        choices[i].style.display = 'inline-block';
+        choices[i].onclick = () => checkAnswer(uniqueAnswers[i]);
     }
-    timeLeft = 10;
+
+    timeLeft = 15;
+    isMovementPaused = false;
+    questionStartTime = Date.now();
+    console.log(`Question: ${currentQuestion} = ${correctAnswer}, Choices: ${uniqueAnswers}`);
 }
 
 function checkAnswer(userAnswer) {
     if (isPaused) return;
 
-    const isCorrect = (userAnswer == correctAnswer); // Use == for loose equality
+    const isCorrect = (Number(userAnswer) === correctAnswer);
     if (isCorrect) {
         clearInterval(timer);
         if (!isMuted) correctSound.play();
+        const answerTime = (Date.now() - questionStartTime) / 1000;
+        FAST_SPEED = 50 + Math.min(answerTime * 10, 50);
+        console.log(`Answer time: ${answerTime.toFixed(2)}s, FAST_SPEED: ${FAST_SPEED}ms`);
         let flashCount = 0;
         const flash = () => {
             if (flashCount < 3) {
@@ -207,10 +294,10 @@ function checkAnswer(userAnswer) {
                     setTimeout(flash, 50);
                 }, 100);
             } else {
-                clearInterval(gameLoop); // Clear the existing game loop
+                clearInterval(gameLoop);
                 autoMoving = true;
-                gameLoop = setInterval(autoMoveToFood, FAST_SPEED); // Use fixed fast speed
-                autoMoveToFood(); // Call once immediately to start movement
+                gameLoop = setInterval(autoMoveToFood, FAST_SPEED);
+                autoMoveToFood();
             }
         };
         flash();
@@ -227,6 +314,7 @@ function checkAnswer(userAnswer) {
         if (lives <= 0) {
             endGame();
         } else {
+            isMovementPaused = true;
             setTimeout(() => {
                 generateQuestion();
                 startTimer();
@@ -241,6 +329,7 @@ function autoMoveToFood() {
     const head = { x: snake[0].x, y: snake[0].y };
     let dx = cube.x - head.x;
     let dy = cube.y - head.y;
+    let maxSteps = 20;
 
     let directions = [];
     if (Math.abs(dx) > Math.abs(dy)) {
@@ -259,7 +348,7 @@ function autoMoveToFood() {
     for (let dir of directions) {
         const nextHead = { x: head.x + dir.x, y: head.y + dir.y };
         let willCollide = false;
-        for (let i = 0; i < snake.length; i++) {
+        for (let i = 1; i < snake.length; i++) {
             if (nextHead.x === snake[i].x && nextHead.y === snake[i].y) {
                 willCollide = true;
                 break;
@@ -272,15 +361,37 @@ function autoMoveToFood() {
     }
 
     if (!chosenDirection) {
-        chosenDirection = { x: direction.x, y: direction.y }; // Continue in current direction if no valid move
+        for (let dir of [{ x: 0, y: 1 }, { x: 0, y: -1 }, { x: 1, y: 0 }, { x: -1, y: 0 }]) {
+            const nextHead = { x: head.x + dir.x, y: head.y + dir.y };
+            let willCollide = false;
+            for (let i = 1; i < snake.length; i++) {
+                if (nextHead.x === snake[i].x && nextHead.y === snake[i].y) {
+                    willCollide = true;
+                    break;
+                }
+            }
+            if (!willCollide && (dir.x !== -direction.x || dir.y !== -direction.y)) {
+                chosenDirection = dir;
+                break;
+            }
+        }
+        if (!chosenDirection) {
+            if (--maxSteps <= 0) {
+                console.log('Max steps reached, stopping auto-move');
+                autoMoving = false;
+                clearInterval(gameLoop);
+                gameLoop = setInterval(update, DEFAULT_SPEED);
+                return;
+            }
+            chosenDirection = { x: direction.x, y: direction.y };
+        }
     }
 
     direction = chosenDirection;
 
     const newHead = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
 
-    // Check for collision with self before moving
-    for (let i = 0; i < snake.length; i++) {
+    for (let i = 1; i < snake.length; i++) {
         if (newHead.x === snake[i].x && newHead.y === snake[i].y) {
             endGame();
             return;
@@ -302,7 +413,7 @@ function autoMoveToFood() {
         }
         spawnCube();
         generateQuestion();
-        gameLoop = setInterval(update, DEFAULT_SPEED); // Reset to default speed
+        gameLoop = setInterval(update, DEFAULT_SPEED);
         startTimer();
     } else {
         snake.pop();
@@ -312,16 +423,15 @@ function autoMoveToFood() {
 }
 
 function updateSnake() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     const head = snake[0];
-    ctx.fillStyle = currentHeadColor; // Head color changes every 10 points
+    ctx.fillStyle = currentHeadColor;
     ctx.fillRect(head.x * gridSize, head.y * gridSize, gridSize - 2, gridSize - 2);
-    ctx.fillStyle = '#757575'; // Snake body color set to grey
+    ctx.fillStyle = '#757575';
     for (let i = 1; i < snake.length; i++) {
         ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
-        // Removed stroke for snake body
     }
-    ctx.fillStyle = cube.color || 'red'; // Food remains red
+    ctx.fillStyle = cube.color || 'red';
     const grd = ctx.createRadialGradient(
         cube.x * gridSize + gridSize / 2, cube.y * gridSize + gridSize / 2, 1,
         cube.x * gridSize + gridSize / 2, cube.y * gridSize + gridSize / 2, gridSize / 2
@@ -340,33 +450,54 @@ function startTimer() {
     timer = setInterval(() => {
         if (!isPaused) {
             timeLeft -= 0.1;
-            timerBar.style.setProperty('--width', (timeLeft / 10) * 100); // Remove % unit
+            timerBar.style.setProperty('--width', (timeLeft / 15) * 100); // Adjusted for 15 seconds
             if (timeLeft <= 0) {
-                endGame();
+                console.log(`Timer ran out! Lives before: ${lives}`);
+                clearInterval(timer);
+                timeLeft = Infinity;
+                lives--;
+                console.log(`Lives after: ${lives}`);
+                if (!isMuted) wrongSound.play();
+                livesDisplay.textContent = `LIVE: ${lives}`;
+                if (lives <= 0) {
+                    console.log('Lives <= 0, ending game');
+                    endGame();
+                } else {
+                    console.log('Lives remaining, generating new question');
+                    isMovementPaused = true;
+                    setTimeout(() => {
+                        generateQuestion();
+                        startTimer();
+                    }, 1000);
+                }
             }
         }
     }, 100);
 }
 
 function spawnCube() {
+    // Add padding to prevent spawning on the edges
+    const minEdge = 1; // Minimum distance from edge
+    const maxX = Math.floor(gridWidth) - minEdge - 1; // 52 - 1 - 1 = 50
+    const maxY = Math.floor(gridHeight) - minEdge - 1; // 34 - 1 - 1 = 32
     cube = {
-        x: Math.floor(Math.random() * (canvas.width / gridSize)),
-        y: Math.floor(Math.random() * (canvas.height / gridSize)),
+        x: Math.floor(Math.random() * (maxX - minEdge + 1)) + minEdge, // Between 1 and 50
+        y: Math.floor(Math.random() * (maxY - minEdge + 1)) + minEdge, // Between 1 and 32
         color: score % 10 === 9 ? getFoodColor(score + 1) : 'red'
     };
+    console.log(`Spawned cube at: (${cube.x}, ${cube.y})`);
 }
 
 function update() {
-    if (isPaused) return;
+    if (isPaused || isMovementPaused) return;
 
     const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-    
-    if (head.x < 0 || head.x >= canvas.width / gridSize) {
-        head.x = (head.x + canvas.width / gridSize) % (canvas.width / gridSize);
-    }
-    if (head.y < 0 || head.y >= canvas.height / gridSize) {
-        head.y = (head.y + canvas.height / gridSize) % (canvas.height / gridSize);
-    }
+
+    // Wrap around the canvas boundaries
+    if (head.x < 0) head.x = Math.floor(gridWidth) - 1;
+    if (head.x >= gridWidth) head.x = 0;
+    if (head.y < 0) head.y = Math.floor(gridHeight) - 1;
+    if (head.y >= gridHeight) head.y = 0;
 
     snake.unshift(head);
 
@@ -391,21 +522,11 @@ function update() {
     updateSnake();
 }
 
-function togglePause() {
-    if (isPaused) {
-        isPaused = false;
-        pauseButton.innerHTML = pauseSVG;
-        startTimer();
-    } else {
-        isPaused = true;
-        pauseButton.innerHTML = playSVG;
-        clearInterval(timer);
-    }
-}
-
 function endGame() {
+    console.log('endGame called! Lives:', lives);
     clearInterval(gameLoop);
     clearInterval(timer);
+    timeLeft = Infinity;
     if (score > highscore) {
         highscore = score;
         localStorage.setItem('highscore', highscore);
@@ -413,6 +534,7 @@ function endGame() {
     }
     gameScreen.style.display = 'none';
     gameOverScreen.style.display = 'block';
+    difficultySelect.style.display = 'none'; // Hide dropdown on game over
     finalScore.textContent = score;
 }
 
@@ -422,16 +544,38 @@ function shareScore() {
     shareCanvas.height = 200;
     const shareCtx = shareCanvas.getContext('2d');
 
-    shareCtx.fillStyle = '#F4E074';
+    const gradient = shareCtx.createLinearGradient(0, 0, 0, shareCanvas.height);
+    gradient.addColorStop(0, '#E8CB4A');
+    gradient.addColorStop(1, '#F4E074');
+    shareCtx.fillStyle = gradient;
     shareCtx.fillRect(0, 0, shareCanvas.width, shareCanvas.height);
+
+    shareCtx.strokeStyle = '#000';
+    shareCtx.lineWidth = 4;
+    shareCtx.strokeRect(0, 0, shareCanvas.width, shareCanvas.height);
+
+    shareCtx.fillStyle = 'green';
+    for (let i = 0; i < 3; i++) {
+        shareCtx.fillRect(20 + i * 15, 20, 10, 10);
+    }
+    shareCtx.fillStyle = 'red';
+    shareCtx.beginPath();
+    shareCtx.arc(65, 25, 5, 0, Math.PI * 2);
+    shareCtx.fill();
+
     shareCtx.fillStyle = '#000';
     shareCtx.font = 'bold 30px Bangers';
     shareCtx.textAlign = 'center';
-    shareCtx.fillText('Math Snake Highscore!', shareCanvas.width / 2, 60);
+    shareCtx.letterSpacing = '3px';
+    shareCtx.fillText('MATH SNAKE', shareCanvas.width / 2, 80);
+
     shareCtx.font = 'bold 40px Bangers';
+    shareCtx.fillStyle = '#D32F2F';
     shareCtx.fillText(highscore, shareCanvas.width / 2, 120);
+
     shareCtx.font = '20px Bangers';
-    shareCtx.fillText('Play now at MathSnake.com', shareCanvas.width / 2, 160);
+    shareCtx.fillStyle = '#000';
+    shareCtx.fillText('Play at MathSnake.com!', shareCanvas.width / 2, 160);
 
     shareCanvas.toBlob(blob => {
         const item = new ClipboardItem({ 'image/png': blob });
@@ -444,7 +588,6 @@ function shareScore() {
     });
 }
 
-// Add keyboard controls for snake movement
 document.addEventListener('keydown', (event) => {
     if (isPaused) return;
     switch (event.key) {
