@@ -185,6 +185,7 @@ button {
     transition: transform 0.1s;
     font-family: 'Bangers', Arial, sans-serif;
     letter-spacing: 3px; /* Apply letter-spacing */
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 1); /* Apply shadow */
 }
 
 button:hover {
@@ -235,7 +236,7 @@ button:hover {
         display: flex;
         flex-direction: column;
         gap: 8px;
-      }
+    }
 
     #start-screen h1, #game-over-screen h1 {
         font-size: 24px; /* Reduced for tighter fit */
@@ -270,7 +271,7 @@ button:hover {
         justify-content: space-around;
         padding: 0px;
         height: 28px;
-      }
+    }
 
     .control-section {
         padding: 2px 6px; /* Further reduced padding */
@@ -339,4 +340,95 @@ button:hover {
 /* Ensure viewport meta tag is applied (add to index.html if missing) */
 @supports (-webkit-overflow-scrolling: touch) {
     /* This is a hack to target mobile devices, but add the meta tag for reliability */
+}
+
+/* ==== New styles for dropdown visibility ======== */
+#difficulty {
+    display: block; /* Ensure dropdown is visible by default on start screen */
+}
+
+#game-screen #difficulty,
+#game-over-screen #difficulty {
+    display: none; /* Hide dropdown on game and game-over screens */
+}
+
+#difficulty-container {
+    text-align: center;
+    display: none; /* Hidden by default */
+}
+
+.screen-container.show-difficulty #difficulty-container {
+    display: block; /* Show when .show-difficulty is present */
+}
+
+#difficulty-container label {
+    font-family: 'Bangers', Arial, sans-serif;
+    letter-spacing: 3px;
+    font-size: 24px;
+    color: #000;
+    margin-bottom: 10px;
+    display: block;
+    text-transform: uppercase;
+}
+
+#difficulty {
+    font-family: 'Bangers', Arial, sans-serif;
+    letter-spacing: 3px;
+    font-size: 18px;
+    color: #000;
+    background: #E7E7E7; /* Restored background color */
+    border: 2px solid #000;
+    border-radius: 6px;
+    padding: 12px 40px 12px 20px;
+    /* box-shadow: 2px 2px 0 rgba(0, 0, 0, 1); */
+    cursor: pointer;
+    transition: transform 0.1s;
+    width: 300px;
+    max-width: 100%;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    position: relative;
+    outline: none;
+}
+
+#difficulty-container span.arrow {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #000;
+    pointer-events: none;
+}
+
+#difficulty:hover {
+    transform: scale(1.05); /* Ensured hover effect works */
+}
+
+#difficulty option {
+    font-family: 'Bangers', Arial, sans-serif;
+    letter-spacing: 3px;
+    background: #F4E074;
+    color: #000;
+    padding: 10px;
+}
+
+@media (max-width: 425px) {
+    #difficulty-container label {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+    #difficulty {
+        font-size: 12px;
+        padding: 10px 15px;
+        width: 100%;
+        text-align: center;
+    }
+
+    #difficulty-container span.arrow {
+        right: 15px;
+        font-size: 16px;
+    }
 }
